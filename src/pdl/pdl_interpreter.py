@@ -690,6 +690,8 @@ def process_block_body(
             repeat_loc = append(loc, "repeat")
             iidx = 0
             try:
+                max_retry = 100
+                retry_count = 0
                 first = True
                 while True:
                     if max_iterations is not None and iidx >= max_iterations:
@@ -747,11 +749,17 @@ def process_block_body(
             except PDLRuntimeError as exc:
                 iter_trace.append(exc.trace)
                 trace = block.model_copy(update={"trace": iter_trace})
-                raise PDLRuntimeError(
-                    exc.message,
-                    loc=exc.loc or repeat_loc,
-                    trace=trace,
-                ) from exc
+                if retry_count == max_retry:
+                    raise PDLRuntimeError(
+                        exc.message,
+                        loc=exc.loc or repeat_loc,
+                        trace=trace,
+                    ) from exc
+                else:
+                    retry_count += 1
+                    error = f"Error occurred. {repr(exc)}"
+                    print(f"\n\033[0;31m{error}\033[0m\n")
+                    background = lazy_messages_concat(background, [{"role": "assistant", "content": error}])
             result = combine_results(block.join.iteration_type, results)
             if state.yield_result and not iteration_state.yield_result:
                 yield_result(result.result(), block.kind)
@@ -1401,11 +1409,13 @@ def process_call_code(
                     ]
                 )
             except Exception as exc:
-                raise PDLRuntimeError(
-                    f"Code error: {repr(exc)}",
-                    loc=loc,
-                    trace=block.model_copy(update={"code": code_s}),
-                ) from exc
+                # raise PDLRuntimeError(
+                #     f"Code error: {repr(exc)}",
+                #     loc=loc,
+                #     trace=block.model_copy(update={"code": code_s}),
+                # ) from exc
+                result = f"Code error: {repr(exc)}"
+                background = [{"role": state.role, "content": result}]
         case "jinja":
             try:
                 result = call_jinja(code_s, scope)
@@ -1464,16 +1474,15 @@ def call_python(code: str, scope: ScopeType) -> PdlLazy[Any]:
 
 
 def call_command(code: str) -> PdlLazy[str]:
-    args = shlex.split(code)
     p = subprocess.run(
-        args, capture_output=True, text=True, check=False, shell=False
+        code, capture_output=True, text=True, check=False, shell=True
     )  # nosec B603
     # [B603:subprocess_without_shell_equals_true] subprocess call - check for execution of untrusted input.
     # This is the code that the user asked to execute. It can be executed in a docker container with the option `--sandbox`
     if p.stderr != "":
         print(p.stderr, file=sys.stderr)
     if p.returncode != 0:
-        raise ValueError(f"command exited with non zero code: {p.returncode}")
+        raise ValueError(f"command exited with non zero code: {p.returncode}. Error detail: {p.stderr}")
     output = p.stdout
     return PdlConst(output)
 
