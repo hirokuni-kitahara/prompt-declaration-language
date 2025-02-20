@@ -154,9 +154,9 @@ def generate(
         state: Initial state of the interpreter.
         trace_file: Indicate if the execution trace must be produced and the file to save it.
     """
-    if log_file is None:
-        log_file = "log.txt"
-    logging.basicConfig(filename=log_file, encoding="utf-8", format="", filemode="w")
+    if not log_file:
+        fileHandler = logging.FileHandler(filename=log_file, encoding="utf-8", format="", mode="w")
+        logger.addHandler(fileHandler)
     try:
         prog, loc = parse_file(pdl_file)
         if state is None:
@@ -750,6 +750,7 @@ def process_block_body(
                 iter_trace.append(exc.trace)
                 trace = block.model_copy(update={"trace": iter_trace})
                 if retry_count == max_retry:
+                    print("\n\033[0;31mFailed to call a PDL block and the number of retry exceeds the limit.\033[0m\n")
                     raise PDLRuntimeError(
                         exc.message,
                         loc=exc.loc or repeat_loc,
