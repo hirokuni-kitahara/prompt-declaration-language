@@ -193,6 +193,11 @@ class PdlApply2(PdlLazy[Apply2OutputT]):
         x2: PdlLazy[Apply2Input2T],
     ):
         self._data: Apply2OutputT
+
+        if isinstance(x1, list):
+            x1 = PdlList(x1)
+        if isinstance(x2, list):
+            x2 = PdlList(x2)
         self.f = f
         self.x1 = x1
         self.x2 = x2

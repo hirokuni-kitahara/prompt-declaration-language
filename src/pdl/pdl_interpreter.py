@@ -689,11 +689,11 @@ def process_block_body(
                 )
             repeat_loc = append(loc, "repeat")
             iidx = 0
-            try:
-                max_retry = 100
-                retry_count = 0
-                first = True
-                while True:
+            max_retry = 100
+            retry_count = 0
+            first = True
+            while True:
+                try:
                     if max_iterations is not None and iidx >= max_iterations:
                         break
                     if lengths is not None and iidx >= lengths[0]:
@@ -746,21 +746,25 @@ def process_block_body(
                     stop = process_condition_of(block, "until", scope, loc)
                     if stop:
                         break
-            except PDLRuntimeError as exc:
-                iter_trace.append(exc.trace)
-                trace = block.model_copy(update={"trace": iter_trace})
-                if retry_count == max_retry:
-                    print("\n\033[0;31mFailed to call a PDL block and the number of retry exceeds the limit.\033[0m\n")
-                    raise PDLRuntimeError(
-                        exc.message,
-                        loc=exc.loc or repeat_loc,
-                        trace=trace,
-                    ) from exc
-                else:
-                    retry_count += 1
-                    error = f"Error occurred. {repr(exc)}"
-                    print(f"\n\033[0;31m{error}\033[0m\n")
-                    background = lazy_messages_concat(background, [{"role": "assistant", "content": error}])
+                except PDLRuntimeError as exc:
+                    if exc.message == "Keyboard Interrupt":
+                        raise
+                    iter_trace.append(exc.trace)
+                    trace = block.model_copy(update={"trace": iter_trace})
+                    if retry_count == max_retry:
+                        print("\n\033[0;31mFailed to call a PDL block and the number of retry exceeds the limit.\033[0m\n")
+                        raise PDLRuntimeError(
+                            exc.message,
+                            loc=exc.loc or repeat_loc,
+                            trace=trace,
+                        ) from exc
+                    else:
+                        retry_count += 1
+                        error = f"Error occurred. {repr(exc)}"
+                        print(f"\n\033[0;31m{error}\033[0m\n")
+                        if background and background.data and background.data[-1]["content"].endswith(error):
+                            error = "The previous error occurs multiple times. You have to change the output."
+                        background = lazy_messages_concat(background, [{"role": "assistant", "content": error}])
             result = combine_results(block.join.iteration_type, results)
             if state.yield_result and not iteration_state.yield_result:
                 yield_result(result.result(), block.kind)

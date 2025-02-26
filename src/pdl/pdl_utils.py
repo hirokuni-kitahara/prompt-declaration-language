@@ -150,8 +150,8 @@ def apply_defaults(
 
     parameters = apply_raw_defaults(model_id, params, all_model_defaults)
 
-    if "decoding_method" in parameters and parameters["decoding_method"] == "sample":
-        parameters = apply_raw_defaults(model_id, parameters, get_sampling_defaults())
+    # if "decoding_method" in parameters and parameters["decoding_method"] == "sample":
+    #     parameters = apply_raw_defaults(model_id, parameters, get_sampling_defaults())
 
     return parameters
 
