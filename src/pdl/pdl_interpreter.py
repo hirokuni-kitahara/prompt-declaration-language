@@ -154,7 +154,7 @@ def generate(
         state: Initial state of the interpreter.
         trace_file: Indicate if the execution trace must be produced and the file to save it.
     """
-    if not log_file:
+    if log_file:
         fileHandler = logging.FileHandler(filename=log_file, encoding="utf-8", format="", mode="w")
         logger.addHandler(fileHandler)
     try:
