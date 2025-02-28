@@ -166,7 +166,8 @@ def generate(
         )
         _ = future_result.result()
         if not state.yield_background:
-            print(background)
+            pass
+            # print(background)
             # if state.yield_background:
             #     print("\n----------------")
             # if result is None:
