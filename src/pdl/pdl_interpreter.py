@@ -1732,5 +1732,6 @@ def get_var(var: str, scope: ScopeType, loc: LocationType) -> Any:
 
 
 def append_log(state: InterpreterState, title, somestring):
-    logger.warning("**********  %s  **********", title)
+    pass
+    # logger.warning("**********  %s  **********", title)
     # logger.warning(str(somestring)) # XXX TODO: Logging without forcing lazy values
