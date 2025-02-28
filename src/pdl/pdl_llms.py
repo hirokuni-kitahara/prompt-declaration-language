@@ -59,6 +59,8 @@ class LitellmModel:
             parameters = set_structured_decoding_parameters(spec, parameters)
             if parameters.get("mock_response") is not None:
                 litellm.suppress_debug_info = True
+            print("[DEBUG] model_id:", model_id)
+            print("[DEBUG] parameters:", parameters)
             response = await acompletion(
                 model=model_id, messages=list(messages), stream=False, **parameters
             )

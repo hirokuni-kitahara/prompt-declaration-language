@@ -1179,7 +1179,6 @@ def process_call_model(
     ScopeType,
     LitellmModelBlock,
 ]:
-    print("[DEBUG] scope:", scope)
     # evaluate model name
     _, concrete_block = process_expr_of(block, "model", scope, loc)
     # evaluate model params
