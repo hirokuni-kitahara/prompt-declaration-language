@@ -155,7 +155,6 @@ def generate(
         state: Initial state of the interpreter.
         trace_file: Indicate if the execution trace must be produced and the file to save it.
     """
-    print("[DEBUG] log_file:", log_file)
     if log_file:
         fileHandler = logging.FileHandler(filename=log_file, encoding="utf-8", format="", mode="w")
         logger.addHandler(fileHandler)
@@ -1401,6 +1400,7 @@ def process_call_code(
                     [PdlDict({"role": state.role, "content": lazy_apply(str, result), "defsite": block.id})]  # type: ignore
                 )
             except Exception as exc:
+                print("[DEBUG] Code error detail:", traceback.format_exc())
                 raise PDLRuntimeError(
                     f"Code error: {repr(exc)}",
                     loc=loc,
