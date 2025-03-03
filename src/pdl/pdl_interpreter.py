@@ -6,7 +6,6 @@ import subprocess  # nosec
 import sys
 import time
 import types
-import traceback
 
 # TODO: temporarily disabling warnings to mute a pydantic warning from liteLLM
 import warnings
@@ -763,9 +762,7 @@ def process_block_body(
                     else:
                         retry_count += 1
                         error = f"Error occurred. {repr(exc)}"
-                        error_detail = traceback.format_exc()
                         print(f"\n\033[0;31m{error}\033[0m\n")
-                        print(f"\n\033[0;31m{error_detail}\033[0m\n")
                         if background and background.data and background.data[-1]["content"].endswith(error):
                             error = "The previous error occurs multiple times. You have to change the output."
                         background = lazy_messages_concat(background, [{"role": "assistant", "content": error}])
@@ -1400,7 +1397,6 @@ def process_call_code(
                     [PdlDict({"role": state.role, "content": lazy_apply(str, result), "defsite": block.id})]  # type: ignore
                 )
             except Exception as exc:
-                print("[DEBUG] Code error detail:", traceback.format_exc())
                 raise PDLRuntimeError(
                     f"Code error: {repr(exc)}",
                     loc=loc,
